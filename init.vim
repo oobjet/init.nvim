@@ -12,7 +12,6 @@ call plug#begin(expand('~/.config/nvim/plugged'))
 "}}}
 
 " ================= looks and GUI stuff ================== "{{{
-
 Plug 'ryanoasis/vim-devicons'                           " pretty icons everywhere
 Plug 'luochen1990/rainbow'                              " rainbow parenthesis
 Plug 'hzchirs/vim-material'                             " material color themes
@@ -38,6 +37,11 @@ Plug 'machakann/vim-sandwich'                           " make sandwiches
 Plug 'christoomey/vim-tmux-navigator'                   " seamless vim and tmux navigation
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install'  }
 Plug 'memgraph/cypher.vim'
+Plug 'tidalcycles/vim-tidal'
+Plug 'mcchrish/nnn.vim'
+Plug 'alok/notational-fzf-vim'
+Plug 'img-paste-devs/img-paste.vim'
+Plug 'mechatroner/rainbow_csv'
 call plug#end()
 
 "}}}
@@ -175,8 +179,8 @@ let g:startify_lists = [
 
 " bookmark examples
 let  g:startify_bookmarks =  [
-    \ {'v': '~/.config/nvim'},
-    \ {'d': '~/.dotfiles' }
+    \ {'v': '~/.config/nvim/init.vim'},
+    \ {'t': '~/Todo/todo.txt' }
     \ ]
 
 " custom commands
@@ -186,19 +190,20 @@ let g:startify_commands = [
     \ {'pu': ['Update vim plugins',':PlugUpdate | PlugUpgrade']},
     \ {'uc': ['Update coc Plugins', ':CocUpdate']},
     \ {'h':  ['Help', ':help']},
+    \ {'n':  ['Notes', ':NV']},
     \ ]
 
 " custom banner
 let g:startify_custom_header = [
  \ '',
- \ '                                                    ▟▙            ',
- \ '                                                    ▝▘            ',
- \ '            ██▃▅▇█▆▖  ▗▟████▙▖   ▄████▄   ██▄  ▄██  ██  ▗▟█▆▄▄▆█▙▖',
- \ '            ██▛▔ ▝██  ██▄▄▄▄██  ██▛▔▔▜██  ▝██  ██▘  ██  ██▛▜██▛▜██',
- \ '            ██    ██  ██▀▀▀▀▀▘  ██▖  ▗██   ▜█▙▟█▛   ██  ██  ██  ██',
- \ '            ██    ██  ▜█▙▄▄▄▟▊  ▀██▙▟██▀   ▝████▘   ██  ██  ██  ██',
- \ '            ▀▀    ▀▀   ▝▀▀▀▀▀     ▀▀▀▀       ▀▀     ▀▀  ▀▀  ▀▀  ▀▀',
- \ '',
+ \ '       ____          ',
+ \ '     /     \         ',
+ \ '     \.@-@./         ',
+ \ '     /`\_/`\         ',
+ \ '    //  _  \\        ',
+ \ '   | \     )|_       ',
+ \ '  /`\_`>  <_/ \      ',
+ \ '  \__/'---'\__/      ',
  \ '',
  \ '',
  \]
@@ -224,6 +229,20 @@ let g:fzf_tags_command = 'ctags -R'
 let $FZF_DEFAULT_OPTS = '--layout=reverse --inline-info'
 let $FZF_DEFAULT_COMMAND = "rg --files --hidden --glob '!.git/**' --glob '!build/**' --glob '!.dart_tool/**' --glob '!.idea' --glob '!node_modules'"
 
+" tidal-vim
+let maplocalleader=","
+" let g:tidal_sc_enable = 1
+" let g:tidal_sc_boot = "/home/florian/MEGAsync/Musique/tidalcycles/sc/superdirt_startup.sc"
+
+" Notational Velocity
+let g:nv_search_paths=['~/MEGAsync/textes/notes','~/MEGAsync/textes']
+
+" img paste markdown
+autocmd FileType markdown nmap <buffer><silent> <leader>p :call mdip#MarkdownClipboardImage()<CR>
+" there are some defaults for image directory and image name, you can change them
+" let g:mdip_imgdir = 'img'
+" let g:mdip_imgname = 'image'
+
 "}}}
 
 " ======================== Commands ============================= "{{{
@@ -236,7 +255,7 @@ au CursorHold * silent call CocActionAsync('highlight') " highlight match on cur
 " enable spell only if file type is normal text
 let spellable = ['markdown', 'gitcommit', 'txt', 'text', 'liquid', 'rst']
 autocmd BufEnter * if index(spellable, &ft) < 0 | set nospell | else | set spell | endif
-
+setlocal spelllang=fr,en
 
 " coc completion popup
 autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif
@@ -322,6 +341,25 @@ function! s:show_documentation()
   endif
 endfunction
 
+" Export markdown files to pdf using pandoc and open pdf
+autocmd FileType markdown nnoremap <buffer> <leader>mp :!pandoc % -o %:r.pdf -F mermaid-filter --template eisvogel.latex --pdf-engine xelatex && xdg-open %:r.pdf<cr>
+
+" Export markdown files to beamer using pandoc and open pdf
+autocmd FileType markdown nnoremap <buffer> <leader>mb :!pandoc % -o %:r.pdf --filter pandoc-latex-environment --to beamer --pdf-engine xelatex && xdg-open %:r.pdf<cr>
+
+" Export markdown files to slides using pandoc and open html
+autocmd FileType markdown nnoremap <buffer> <leader>ms :!pandoc -t slidy -s % -o %:r.html && xdg-open %:r.html<cr>
+" autocmd FileType markdown nnoremap <buffer> <leader>mb :!pandoc -t beamer -s % -o %:r.pdf && xdg-open %:r.pdf <cr>
+  " pandoc -t slidy -s $file.md -o $file.html
+  " xdg-open $file.html
+    " xdg-open $file.pdf
+" autocmd FileType markdown nnoremap <buffer> <leader>pd :!pandoc % -o %:r.pdf<cr>
+
+" Export markdown files to docx using pandoc and open docx
+autocmd FileType markdown nnoremap <buffer> <leader>mw :!pandoc % -o %:r.docx --template eisvogel.latex && xdg-open %:r.docx<cr>
+
+" Export markdown files to odt using pandoc and open odt
+autocmd FileType markdown nnoremap <buffer> <leader>mo :!pandoc % -o %:r.odt --template eisvogel.latex && xdg-open %:r.odt<cr>
 "}}}
 
 " ======================== Custom Mappings ====================== "{{{
